@@ -12,10 +12,7 @@ fromIndex i k = (col, row, cell)
         row = i `quot` k^2
         cell = col `quot` k + (row `quot` k) * k
 
-empty k = (k, [
-  let cell = col `quot` k + (row `quot` k) * k
-      values = [1..k^2]
-      in ((col, row, cell), values) | row <- [0..k^2-1], col <- [0..k^2-1] ])
+empty k = (k, [(fromIndex i k, [1..k^2]) | i <- [0..k^4-1]])
 
 kill k m idx v = [update loc vs | (loc, vs) <- m] where
   (col, row, cell) = fromIndex idx k
@@ -23,14 +20,14 @@ kill k m idx v = [update loc vs | (loc, vs) <- m] where
                                     | col /= col' && row /= row' && cell /= cell' = (loc, vs)
                                     | otherwise                                   = (loc, vs \\ [v])
 
+findJust [] = Nothing
+findJust (Nothing:xs) = findJust xs
+findJust (x:xs) = x
+
 -- backtrack pos grid | trace("pos: " ++ show pos ++ "\ngrid:\n" ++ showGrid grid) False = undefined
-backtrack pos grid@(k, m) | pos == k^4-1 = Just grid
-                          | otherwise    = case find found [backtrack next $ (k, kill k m pos v) | v <- vs ]
-                                           of Nothing -> Nothing
-                                              Just res -> res
+backtrack pos grid@(k, m) | pos == k^4 = Just grid
+                          | otherwise  = findJust [backtrack next $ (k, kill k m pos v) | v <- vs]
                                            where (_, vs) = m !! pos
                                                  next = pos + 1
-                                                 found Nothing = False
-                                                 found _       = True
 
 solve grid = backtrack 0 grid
